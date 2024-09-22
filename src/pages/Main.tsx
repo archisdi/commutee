@@ -80,12 +80,15 @@ const Main: React.FC = () => {
         'Authorization': `Bearer ${JWT_TOKEN}`
       }
 
-      const { data } = await fetch(
+      let { data } = await fetch(
         `${BASE_URL}/krlweb/v1/schedule?stationid=${station.sta_id}&timefrom=${timefrom}&timeto=${timeto}`,
         { headers: defaultHeaders }
       )
-        .then(res => res.json())
-        .catch(() => ({ data: [] }));
+        .then(res => res.json());
+
+      if (typeof data === 'string') {
+        data = [];
+      }
 
       const TrainSchedule = data
         .filter((train: TrainSchedule) => !train.ka_name.includes("TIDAK ANGKUT PENUMPANG"))
@@ -282,6 +285,14 @@ const Main: React.FC = () => {
     </IonCard>
   ));
 
+  const emptySchedule = (
+    <IonCard>
+      <IonCardContent style={{ padding: '15px' }}>
+        <IonText>Tidak ada jadwal kereta</IonText>
+      </IonCardContent>
+    </IonCard>
+  );
+
   return (
     <IonPage>
       <IonContent>
@@ -291,7 +302,7 @@ const Main: React.FC = () => {
           </IonRefresher>
           {selectStationModal}
           {stations}
-          {schedules}
+          {schedules.length ? schedules : emptySchedule}
         </Frame>
       </IonContent>
     </IonPage>
