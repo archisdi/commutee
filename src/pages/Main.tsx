@@ -37,6 +37,12 @@ const Main: React.FC = () => {
   const [trainSchedule, setTrainSchedule] = useState<TrainSchedule[]>([]);
 
   const getStation = async () => {
+    const station = localStorage.getItem('stations');
+    if (station) {
+      setStation(JSON.parse(station));
+      return;
+    }
+
     const defaultHeaders = {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${JWT_TOKEN}`
@@ -50,6 +56,7 @@ const Main: React.FC = () => {
 
     const stations = data.filter((station: Station) => station.group_wil === 0 && station.fg_enable === 1);
     setStation(stations);
+    localStorage.setItem('stations', JSON.stringify(stations));
   }
 
   const getStationSchedule = async (station?: Station) => {
@@ -95,7 +102,7 @@ const Main: React.FC = () => {
     e.detail.complete();
   }
 
-  const rememberLastStation = (station: Station) => {
+  const selectStation = (station: Station) => {
     setSelectedStation(station);
     localStorage.setItem('selectedStation', JSON.stringify(station));
   }
@@ -123,14 +130,14 @@ const Main: React.FC = () => {
     return `${time} min`;
   };
 
-  const selectStation =
+  const stations =
     <IonCard>
       <IonCardContent style={{ padding: '10px' }}>
         <IonSelect
           label="Stasiun"
           interface='action-sheet'
           selectedText={selectedStation?.sta_name}
-          onIonChange={(e) => rememberLastStation(e.detail.value)}
+          onIonChange={(e) => selectStation(e.detail.value)}
         >
           {station.map((sta, idx) => (
             <IonSelectOption key={idx} value={sta} >
@@ -141,7 +148,7 @@ const Main: React.FC = () => {
       </IonCardContent>
     </IonCard>
 
-  const trainScheduleList = trainSchedule.map((train, idx) => (
+  const schedules = trainSchedule.map((train, idx) => (
     <IonCard key={idx} style={{ backgroundColor: train.color }}>
       <IonCardContent style={{ padding: '5px' }}>
         <IonGrid>
@@ -168,8 +175,8 @@ const Main: React.FC = () => {
         <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
           <IonRefresherContent />
         </IonRefresher>
-        {selectStation}
-        {trainScheduleList}
+        {stations}
+        {schedules}
       </IonContent>
     </IonPage>
   );
