@@ -2,9 +2,12 @@ import moment from 'moment';
 
 import { useEffect, useState } from 'react';
 import {
-  IonContent, IonPage, IonSelect, IonSelectOption, IonCard, IonCardContent, IonText, IonRow, IonCol, IonGrid,
-  IonRefresher, IonRefresherContent, useIonLoading
+  IonContent, IonPage, IonCard, IonCardContent, IonText, IonRow, IonCol, IonGrid,
+  IonRefresher, IonRefresherContent, useIonLoading, IonModal, IonHeader, IonToolbar,
+  IonTitle, IonButtons, IonButton, IonIcon, IonList, IonItem, IonSearchbar
 } from '@ionic/react';
+
+import { caretDownSharp } from 'ionicons/icons';
 
 import Frame from '../components/Layout';
 
@@ -24,24 +27,26 @@ interface Station {
   sta_name: string;
   group_wil: number;
   fg_enable: number;
+  is_favorite?: boolean;
 }
 
 const JWT_TOKEN = import.meta.env.VITE_JWT_TOKEN;
 const BASE_URL = "https://api-partner.krl.co.id";
-const DELTA_MINUTES = 30;
+const DELTA_MINUTES = 45;
 
 const Main: React.FC = () => {
   const now = moment();
   const [showLoading, dismissLoading] = useIonLoading();
-  const [station, setStation] = useState<Station[]>([]);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
+  const [station, setStation] = useState<Station[]>([]);
   const [selectedStation, setSelectedStation] = useState<Station | null>(null);
   const [trainSchedule, setTrainSchedule] = useState<TrainSchedule[]>([]);
 
   const getStation = async () => {
-    const station = localStorage.getItem('stations');
-    if (station) {
-      setStation(JSON.parse(station));
+    const cacheStations = localStorage.getItem('stations');
+    if (cacheStations) {
+      setStation(JSON.parse(cacheStations));
       return;
     }
 
@@ -116,6 +121,20 @@ const Main: React.FC = () => {
     }
   }
 
+  const handleSearchStation = (ev: CustomEvent) => {
+    const searchValue = ev.detail.value;
+    const filteredStation = station.filter((sta) => sta.sta_name.toLowerCase().includes(searchValue.toLowerCase()));
+    setStation(filteredStation);
+  }
+
+  const handleSelectStation = (station: Station) => {
+    selectStation(station);
+    setIsSearchOpen(false);
+
+    /** reset filtered station */
+    getStation();
+  }
+
   useEffect(() => {
     loadLastSelectedStation();
     getStation();
@@ -132,21 +151,41 @@ const Main: React.FC = () => {
     return `${time} min`;
   };
 
+  const searchModal =
+    <IonModal isOpen={isSearchOpen}>
+      <IonHeader>
+        <IonToolbar>
+          <IonTitle>Pilih Stasiun</IonTitle>
+          <IonButtons slot="end">
+            <IonButton onClick={() => setIsSearchOpen(false)}>Tutup</IonButton>
+          </IonButtons>
+        </IonToolbar>
+      </IonHeader>
+      <IonContent className="ion-padding">
+        <IonSearchbar debounce={500} onIonInput={(ev) => handleSearchStation(ev)} />
+        <IonList>
+          {station.map((station) => (
+            <IonItem key={station.sta_id} onClick={() => handleSelectStation(station)}>
+              {station.sta_name}
+            </IonItem>
+          ))}
+        </IonList>
+      </IonContent>
+    </IonModal>
+
   const stations =
     <IonCard>
-      <IonCardContent style={{ padding: '10px' }}>
-        <IonSelect
-          label="Stasiun"
-          interface='action-sheet'
-          selectedText={selectedStation?.sta_name}
-          onIonChange={(e) => selectStation(e.detail.value)}
-        >
-          {station.map((sta, idx) => (
-            <IonSelectOption key={idx} value={sta} >
-              {sta.sta_name}
-            </IonSelectOption>
-          ))}
-        </IonSelect>
+      <IonCardContent style={{ padding: '15px' }} onClick={() => { setIsSearchOpen(true) }}>
+        <IonRow>
+          <IonCol size='10'>
+            <IonText>
+              <b>{selectedStation ? `STASIUN ${selectedStation.sta_name}` : 'Pilih Stasiun'}</b>
+            </IonText>
+          </IonCol>
+          <IonCol size='2' style={{ textAlign: 'right' }}>
+            <IonIcon icon={caretDownSharp} />
+          </IonCol>
+        </IonRow>
       </IonCardContent>
     </IonCard>
 
@@ -178,6 +217,7 @@ const Main: React.FC = () => {
           <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
             <IonRefresherContent />
           </IonRefresher>
+          {searchModal}
           {stations}
           {schedules}
         </Frame>
