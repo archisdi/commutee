@@ -132,7 +132,14 @@ const Main: React.FC = () => {
 
   const handleSearchStation = (ev: CustomEvent) => {
     const searchValue = ev.detail.value;
-    const filteredStation = station.filter((sta) => sta.sta_name.toLowerCase().includes(searchValue.toLowerCase()));
+    let filteredStation: Station[] = JSON.parse(localStorage.getItem('stations')!);
+
+    if (searchValue) {
+      filteredStation = filteredStation.filter((station) => {
+        return station.sta_name.toLowerCase().includes(searchValue.toLowerCase());
+      });
+    }
+
     setStation(filteredStation);
   }
 
@@ -232,7 +239,7 @@ const Main: React.FC = () => {
         </IonToolbar>
       </IonHeader>
       <IonContent className="ion-padding">
-        <IonSearchbar debounce={500} onIonInput={(ev) => handleSearchStation(ev)} />
+        <IonSearchbar placeholder='Cari' debounce={500} onIonInput={(ev) => handleSearchStation(ev)} />
         {renderStationHistoryList()}
         {renderStationList()}
       </IonContent>
