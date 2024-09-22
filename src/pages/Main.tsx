@@ -6,6 +6,8 @@ import {
   IonRefresher, IonRefresherContent, useIonLoading
 } from '@ionic/react';
 
+import Frame from '../components/Layout';
+
 interface TrainSchedule {
   train_id: string;
   ka_name: string;
@@ -171,12 +173,14 @@ const Main: React.FC = () => {
 
   return (
     <IonPage>
-      <IonContent fullscreen>
-        <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
-          <IonRefresherContent />
-        </IonRefresher>
-        {stations}
-        {schedules}
+      <IonContent>
+        <Frame>
+          <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
+            <IonRefresherContent />
+          </IonRefresher>
+          {stations}
+          {schedules}
+        </Frame>
       </IonContent>
     </IonPage>
   );
