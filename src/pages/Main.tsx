@@ -285,13 +285,13 @@ const Main: React.FC = () => {
     </IonCard>
   ));
 
-  const emptySchedule = (
+  const emptySchedule = selectedStation ? (
     <IonCard>
       <IonCardContent style={{ padding: '15px' }}>
         <IonText>Tidak ada jadwal kereta</IonText>
       </IonCardContent>
     </IonCard>
-  );
+  ) : null;
 
   return (
     <IonPage>
