@@ -95,7 +95,20 @@ const Main: React.FC = () => {
     e.detail.complete();
   }
 
+  const rememberLastStation = (station: Station) => {
+    setSelectedStation(station);
+    localStorage.setItem('selectedStation', JSON.stringify(station));
+  }
+
+  const loadLastSelectedStation = () => {
+    const lastSelectedStation = localStorage.getItem('selectedStation');
+    if (lastSelectedStation) {
+      setSelectedStation(JSON.parse(lastSelectedStation));
+    }
+  }
+
   useEffect(() => {
+    loadLastSelectedStation();
     getStation();
   }, []);
 
@@ -116,7 +129,8 @@ const Main: React.FC = () => {
         <IonSelect
           label="Pilih stasiun"
           interface='action-sheet'
-          onIonChange={(e) => setSelectedStation(e.detail.value)}
+          selectedText={selectedStation?.sta_name}
+          onIonChange={(e) => rememberLastStation(e.detail.value)}
         >
           {station.map((sta, idx) => (
             <IonSelectOption key={idx} value={sta} >
@@ -126,8 +140,6 @@ const Main: React.FC = () => {
         </IonSelect>
       </IonCardContent>
     </IonCard>
-
-  // const spinner = <IonLoading message="Loading..." spinner="circles"  />
 
   const trainScheduleList = trainSchedule.map((train, idx) => (
     <IonCard key={idx} style={{ backgroundColor: train.color }}>
@@ -156,7 +168,6 @@ const Main: React.FC = () => {
         <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
           <IonRefresherContent />
         </IonRefresher>
-        {/* {spinner} */}
         {selectStation}
         {trainScheduleList}
       </IonContent>
