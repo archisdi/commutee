@@ -33,6 +33,13 @@ interface Station {
 const JWT_TOKEN = import.meta.env.VITE_JWT_TOKEN;
 const BASE_URL = "https://api-partner.krl.co.id";
 const DELTA_MINUTES = 45;
+const NON_COMMUTER_TRAIN_KEY = "TIDAK ANGKUT PENUMPANG";
+
+const LOCAL_STORAGE_KEY = {
+  STATIONS: 'stations',
+  SELECTED_STATION: 'selectedStation',
+  HISTORY_STATION: 'historyStation'
+} as const;
 
 const Main: React.FC = () => {
   const now = moment();
@@ -46,7 +53,7 @@ const Main: React.FC = () => {
   const [historyStation, setHistoryStation] = useState<Station[]>([]);
 
   const getStation = async () => {
-    const cacheStations = localStorage.getItem('stations');
+    const cacheStations = localStorage.getItem(LOCAL_STORAGE_KEY.STATIONS);
     if (cacheStations) {
       setStation(JSON.parse(cacheStations));
       return;
@@ -65,7 +72,7 @@ const Main: React.FC = () => {
 
     const stations = data.filter((station: Station) => station.group_wil === 0 && station.fg_enable === 1);
     setStation(stations);
-    localStorage.setItem('stations', JSON.stringify(stations));
+    localStorage.setItem(LOCAL_STORAGE_KEY.STATIONS, JSON.stringify(stations));
   }
 
   const getStationSchedule = async (station?: Station) => {
@@ -73,7 +80,12 @@ const Main: React.FC = () => {
     showLoading({ showBackdrop: false });
     try {
       const timefrom = moment().format('HH:mm');
-      const timeto = moment().add(DELTA_MINUTES, 'minutes').format('HH:mm');
+
+      // if time to pass midnight, then set time to 23:59 to prevent error
+      let timeto = moment().add(DELTA_MINUTES, 'minutes').format('HH:mm');
+      if (moment(timeto, 'HH:mm').isBefore(moment(timefrom, 'HH:mm'))) {
+        timeto = '23:59';
+      }
 
       const defaultHeaders = {
         'Content-Type': 'application/json',
@@ -90,8 +102,8 @@ const Main: React.FC = () => {
         data = [];
       }
 
-      const TrainSchedule = data
-        .filter((train: TrainSchedule) => !train.ka_name.includes("TIDAK ANGKUT PENUMPANG"))
+      const trainSchedule = data
+        .filter((train: TrainSchedule) => !train.ka_name.includes(NON_COMMUTER_TRAIN_KEY))
         .map((schedule: TrainSchedule) => {
           const arrival = moment(schedule.time_est, 'HH:mm');
           const relative = arrival.diff(now, 'minutes');
@@ -102,7 +114,7 @@ const Main: React.FC = () => {
           };
         });
 
-      setTrainSchedule(TrainSchedule);
+      setTrainSchedule(trainSchedule);
     }
     finally {
       dismissLoading();
@@ -110,7 +122,7 @@ const Main: React.FC = () => {
   }
 
   const getHistoryStation = () => {
-    const history = localStorage.getItem('historyStation');
+    const history = localStorage.getItem(LOCAL_STORAGE_KEY.HISTORY_STATION);
     if (history) {
       setHistoryStation(JSON.parse(history));
     }
@@ -123,11 +135,11 @@ const Main: React.FC = () => {
 
   const selectStation = (station: Station) => {
     setSelectedStation(station);
-    localStorage.setItem('selectedStation', JSON.stringify(station));
+    localStorage.setItem(LOCAL_STORAGE_KEY.SELECTED_STATION, JSON.stringify(station));
   }
 
   const loadLastSelectedStation = () => {
-    const lastSelectedStation = localStorage.getItem('selectedStation');
+    const lastSelectedStation = localStorage.getItem(LOCAL_STORAGE_KEY.SELECTED_STATION);
     if (lastSelectedStation) {
       setSelectedStation(JSON.parse(lastSelectedStation));
     }
@@ -135,7 +147,7 @@ const Main: React.FC = () => {
 
   const handleSearchStation = (ev: CustomEvent) => {
     const searchValue = ev.detail.value;
-    let filteredStation: Station[] = JSON.parse(localStorage.getItem('stations')!);
+    let filteredStation: Station[] = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY.STATIONS)!);
 
     if (searchValue) {
       filteredStation = filteredStation.filter((station) => {
@@ -165,7 +177,7 @@ const Main: React.FC = () => {
         history.shift();
       }
 
-      localStorage.setItem('historyStation', JSON.stringify(history));
+      localStorage.setItem(LOCAL_STORAGE_KEY.HISTORY_STATION, JSON.stringify(history));
       setHistoryStation(history);
     }
   }
