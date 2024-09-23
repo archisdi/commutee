@@ -232,7 +232,7 @@ const Main: React.FC = () => {
   }
 
   const selectStationModal =
-    <IonModal isOpen={isSearchOpen}>
+    <IonModal isOpen={isSearchOpen} onIonModalDidDismiss={() => { setIsSearchOpen(false) }}>
       <IonHeader>
         <IonToolbar>
           <IonTitle>Pilih Stasiun</IonTitle>
