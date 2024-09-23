@@ -34,6 +34,7 @@ const JWT_TOKEN = import.meta.env.VITE_JWT_TOKEN;
 const BASE_URL = "https://api-partner.krl.co.id";
 const DELTA_MINUTES = 45;
 const NON_COMMUTER_TRAIN_KEY = "TIDAK ANGKUT PENUMPANG";
+const TIME_RENDER_INTERVAL = 5000; /** 5 seconds */
 
 const LOCAL_STORAGE_KEY = {
   STATIONS: 'stations',
@@ -42,7 +43,6 @@ const LOCAL_STORAGE_KEY = {
 } as const;
 
 const Main: React.FC = () => {
-  const now = moment();
   const [showLoading, dismissLoading] = useIonLoading();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
@@ -51,6 +51,8 @@ const Main: React.FC = () => {
 
   const [selectedStation, setSelectedStation] = useState<Station | null>(null);
   const [historyStation, setHistoryStation] = useState<Station[]>([]);
+
+  const [now, setNow] = useState(moment());
 
   const getStation = async () => {
     const cacheStations = localStorage.getItem(LOCAL_STORAGE_KEY.STATIONS);
@@ -182,22 +184,34 @@ const Main: React.FC = () => {
     }
   }
 
+  const renderTime = (train: TrainSchedule) => {
+    const arr = moment(train.time_est, 'HH:mm');
+    const relative = moment(arr).diff(now, 'minutes');
+
+    if (relative < 0) {
+      return "Berangkat";
+    }
+    if (relative === 0) {
+      return `${train.time_est} - Tiba`;
+    }
+    return `${train.time_est} - ${relative} min`;
+  }
+
   useEffect(() => {
     loadLastSelectedStation();
     getStation();
     getHistoryStation();
+
+    const interval = setInterval(() => {
+      setNow(moment());
+    }, TIME_RENDER_INTERVAL);
+
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
     getStationSchedule(selectedStation!);
   }, [selectedStation]);
-
-  const getStringTime = (time: number) => {
-    if (time === 0) {
-      return "Tiba";
-    }
-    return `${time} min`;
-  };
 
   const renderStationHistoryList = () => {
     if (!historyStation.length) return null;
@@ -288,7 +302,7 @@ const Main: React.FC = () => {
             </IonCol>
             <IonCol size='5'>
               <IonText color={"light"} >
-                {train.time_est} - {getStringTime(train.time_est_minute)}
+                {renderTime(train)}
               </IonText>
             </IonCol>
           </IonRow>
