@@ -5,7 +5,7 @@ import {
   IonContent, IonPage, IonCard, IonCardContent, IonText, IonRow, IonCol, IonGrid,
   IonRefresher, IonRefresherContent, useIonLoading, IonModal, IonHeader, IonToolbar,
   IonTitle, IonButtons, IonButton, IonIcon, IonList, IonItem, IonSearchbar, IonItemDivider,
-  IonItemGroup, IonLabel
+  IonItemGroup, IonLabel,
 } from '@ionic/react';
 
 import { caretDownSharp } from 'ionicons/icons';
@@ -33,8 +33,9 @@ interface Station {
 const JWT_TOKEN = import.meta.env.VITE_JWT_TOKEN;
 const BASE_URL = "https://api-partner.krl.co.id";
 const DELTA_MINUTES = 45;
-const NON_COMMUTER_TRAIN_KEY = "TIDAK ANGKUT PENUMPANG";
+const NON_COMMUTER_TRAIN_KEY = "TIDAK";
 const TIME_RENDER_INTERVAL = 5000; /** 5 seconds */
+const MAX_HISTORY_STATION = 4;
 
 const LOCAL_STORAGE_KEY = {
   STATIONS: 'stations',
@@ -175,7 +176,7 @@ const Main: React.FC = () => {
 
       history.push(station);
 
-      if (history.length > 5) {
+      if (history.length >= MAX_HISTORY_STATION) {
         history.shift();
       }
 
@@ -221,8 +222,8 @@ const Main: React.FC = () => {
           <IonItemDivider>
             <IonLabel>Terakhir Dipilih</IonLabel>
           </IonItemDivider>
-          {historyStation.map((station) => (
-            <IonItem key={station.sta_id} onClick={() => handleSelectStation(station)}>
+          {historyStation.map((station, idx) => (
+            <IonItem key={`station-history-${idx}`} onClick={() => handleSelectStation(station)}>
               <IonRow>
                 {station.sta_name}
               </IonRow>
@@ -247,8 +248,8 @@ const Main: React.FC = () => {
       <IonList>
         <IonItemGroup>
           {divider}
-          {station.filter(s => !historyMap[s.sta_id]).map((station) => (
-            <IonItem key={station.sta_id} onClick={() => handleSelectStation(station)}>
+          {station.filter(s => !historyMap[s.sta_id]).map((station, idx) => (
+            <IonItem key={`station-${idx}`} onClick={() => handleSelectStation(station)}>
               {station.sta_name}
             </IonItem>
           ))}
@@ -291,7 +292,7 @@ const Main: React.FC = () => {
     </IonCard>
 
   const schedules = trainSchedule.map((train, idx) => (
-    <IonCard key={idx} style={{ backgroundColor: train.color }}>
+    <IonCard key={`schedule-${idx}`} style={{ backgroundColor: train.color }}>
       <IonCardContent style={{ padding: '5px' }}>
         <IonGrid>
           <IonRow>
