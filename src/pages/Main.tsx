@@ -189,13 +189,28 @@ const Main: React.FC = () => {
     const arr = moment(train.time_est, 'HH:mm');
     const relative = moment(arr).diff(now, 'minutes');
 
+    const routeStartStation = train.route_name.split('-')[0].trim();
+    const isStartStation = routeStartStation === selectedStation?.sta_name;
+
     if (relative < 0) {
       return "Berangkat";
     }
+
     if (relative === 0) {
-      return `${train.time_est} - Tiba`;
+      return `${train.time_est} - ${isStartStation ? "Brgkt" : "Tiba"}`;
     }
     return `${train.time_est} - ${relative} min`;
+  }
+
+  const determineColor = (train: TrainSchedule) => {
+    const arr = moment(train.time_est, 'HH:mm');
+    const relative = moment(arr).diff(now, 'minutes');
+
+    if (relative < 0) {
+      return "Gray";
+    }
+
+    return train.color;
   }
 
   useEffect(() => {
@@ -291,26 +306,31 @@ const Main: React.FC = () => {
       </IonCardContent>
     </IonCard>
 
-  const schedules = trainSchedule.map((train, idx) => (
-    <IonCard key={`schedule-${idx}`} style={{ backgroundColor: train.color }}>
-      <IonCardContent style={{ padding: '5px' }}>
-        <IonGrid>
-          <IonRow>
-            <IonCol size='7'>
-              <IonText color={"light"}>
-                <b>{train.dest}</b>
-              </IonText>
-            </IonCol>
-            <IonCol size='5'>
-              <IonText color={"light"} >
-                {renderTime(train)}
-              </IonText>
-            </IonCol>
-          </IonRow>
-        </IonGrid>
-      </IonCardContent>
-    </IonCard>
-  ));
+  const schedules = trainSchedule
+    // .filter((train: TrainSchedule) => { // filter only train that has not depart yet
+    //   const arrival = moment(train.time_est, 'HH:mm');
+    //   return arrival.isAfter(now);
+    // })
+    .map((train, idx) => (
+      <IonCard key={`schedule-${idx}`} style={{ backgroundColor: determineColor(train) }}>
+        <IonCardContent style={{ padding: '5px' }}>
+          <IonGrid>
+            <IonRow>
+              <IonCol size='7'>
+                <IonText color={"light"}>
+                  <b>{train.dest}</b>
+                </IonText>
+              </IonCol>
+              <IonCol size='5'>
+                <IonText color={"light"} >
+                  {renderTime(train)}
+                </IonText>
+              </IonCol>
+            </IonRow>
+          </IonGrid>
+        </IonCardContent>
+      </IonCard>
+    ));
 
   const emptySchedule = selectedStation ? (
     <IonCard>
