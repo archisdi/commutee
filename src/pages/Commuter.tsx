@@ -3,7 +3,7 @@ import moment from 'moment';
 import { useEffect, useState } from 'react';
 import {
   IonContent, IonPage, IonCard, IonCardContent, IonText, IonRow, IonCol, IonGrid,
-  IonRefresher, IonRefresherContent, useIonLoading, IonModal, IonHeader, IonToolbar,
+  IonRefresher, IonRefresherContent, IonModal, IonHeader, IonToolbar, IonSkeletonText,
   IonTitle, IonButtons, IonButton, IonIcon, IonList, IonItem, IonSearchbar, IonItemDivider,
   IonItemGroup, IonLabel,
 } from '@ionic/react';
@@ -36,6 +36,7 @@ const DELTA_MINUTES = 45;
 const NON_COMMUTER_TRAIN_KEY = "TIDAK";
 const TIME_RENDER_INTERVAL = 5000; /** 5 seconds */
 const MAX_HISTORY_STATION = 4;
+const SKELETON_COUNT = 5;
 
 const LOCAL_STORAGE_KEY = {
   STATIONS: 'stations',
@@ -44,7 +45,7 @@ const LOCAL_STORAGE_KEY = {
 } as const;
 
 const Main: React.FC = () => {
-  const [showLoading, dismissLoading] = useIonLoading();
+  const [isLoading, setIsLoading] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   const [station, setStation] = useState<Station[]>([]);
@@ -80,7 +81,7 @@ const Main: React.FC = () => {
 
   const getStationSchedule = async (station?: Station) => {
     if (!station) return;
-    showLoading();
+    setIsLoading(true);
     try {
       const timefrom = moment().format('HH:mm');
 
@@ -120,7 +121,7 @@ const Main: React.FC = () => {
       setTrainSchedule(trainSchedule);
     }
     finally {
-      dismissLoading();
+      setIsLoading(false);
     }
   }
 
@@ -192,25 +193,10 @@ const Main: React.FC = () => {
     const routeStartStation = train.route_name.split('-')[0].trim();
     const isStartStation = routeStartStation === selectedStation?.sta_name;
 
-    if (relative < 0) {
-      return "Berangkat";
-    }
-
     if (relative === 0) {
       return `${train.time_est} - ${isStartStation ? "Brgkt" : "Tiba"}`;
     }
     return `${train.time_est} - ${relative} min`;
-  }
-
-  const determineColor = (train: TrainSchedule) => {
-    const arr = moment(train.time_est, 'HH:mm');
-    const relative = moment(arr).diff(now, 'minutes');
-
-    if (relative < 0) {
-      return "Gray";
-    }
-
-    return train.color;
   }
 
   useEffect(() => {
@@ -307,12 +293,12 @@ const Main: React.FC = () => {
     </IonCard>
 
   const schedules = trainSchedule
-    // .filter((train: TrainSchedule) => { // filter only train that has not depart yet
-    //   const arrival = moment(train.time_est, 'HH:mm');
-    //   return arrival.isAfter(now);
-    // })
+    .filter((train: TrainSchedule) => { /** filter only train that has not depart yet */
+      const arrival = moment(train.time_est, 'HH:mm');
+      return arrival.isAfter(now);
+    })
     .map((train, idx) => (
-      <IonCard key={`schedule-${idx}`} style={{ backgroundColor: determineColor(train) }}>
+      <IonCard key={`schedule-${idx}`} style={{ backgroundColor: train.color }}>
         <IonCardContent style={{ padding: '5px' }}>
           <IonGrid>
             <IonRow>
@@ -335,10 +321,30 @@ const Main: React.FC = () => {
   const emptySchedule = selectedStation ? (
     <IonCard>
       <IonCardContent style={{ padding: '15px' }}>
-        <IonText>Tidak ada jadwal kereta</IonText>
+        <IonText>Belum ada jadwal kereta</IonText>
       </IonCardContent>
     </IonCard>
   ) : null;
+
+  const skeletonSchedule = Array.from({ length: SKELETON_COUNT }).map((_, idx) => (
+    <IonCard key={`skeleton-${idx}`}>
+      <IonCardContent style={{ padding: '5px' }}>
+        <IonGrid>
+          <IonRow>
+            <IonCol size='7'>
+              <IonSkeletonText animated style={{ width: '100%' }} />
+            </IonCol>
+            <IonCol size='5'>
+              <IonSkeletonText animated style={{ width: '100%' }} />
+            </IonCol>
+          </IonRow>
+        </IonGrid>
+      </IonCardContent>
+    </IonCard>
+  ));
+
+  const renderedSchedule =
+    isLoading ? skeletonSchedule : schedules.length ? schedules : emptySchedule;
 
   return (
     <IonPage>
@@ -349,7 +355,7 @@ const Main: React.FC = () => {
         <Frame>
           {selectStationModal}
           {stations}
-          {schedules.length ? schedules : emptySchedule}
+          {renderedSchedule}
         </Frame>
       </IonContent>
     </IonPage>
