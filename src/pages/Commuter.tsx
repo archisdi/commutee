@@ -80,7 +80,7 @@ const Main: React.FC = () => {
 
   const getStationSchedule = async (station?: Station) => {
     if (!station) return;
-    showLoading({ showBackdrop: false });
+    showLoading();
     try {
       const timefrom = moment().format('HH:mm');
 
@@ -343,10 +343,10 @@ const Main: React.FC = () => {
   return (
     <IonPage>
       <IonContent>
+        <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
+          <IonRefresherContent />
+        </IonRefresher>
         <Frame>
-          <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
-            <IonRefresherContent />
-          </IonRefresher>
           {selectStationModal}
           {stations}
           {schedules.length ? schedules : emptySchedule}
