@@ -31,7 +31,7 @@ interface Station {
 }
 
 const JWT_TOKEN = import.meta.env.VITE_JWT_TOKEN;
-const BASE_URL = "https://api-partner.krl.co.id";
+const BASE_URL = "https://api-partner.krl.co.id/krl-webs";
 const DELTA_MINUTES = 45;
 const NON_COMMUTER_TRAIN_KEY = "TIDAK";
 const TIME_RENDER_INTERVAL = 5000; /** 5 seconds */
@@ -68,7 +68,7 @@ const Main: React.FC = () => {
     }
 
     const { data } = await fetch(
-      `${BASE_URL}/krlweb/v1/krl-station`,
+      `${BASE_URL}/v1/krl-station`,
       { headers: defaultHeaders }
     )
       .then(res => res.json());
@@ -96,7 +96,7 @@ const Main: React.FC = () => {
       }
 
       let { data } = await fetch(
-        `${BASE_URL}/krlweb/v1/schedule?stationid=${station.sta_id}&timefrom=${timefrom}&timeto=${timeto}`,
+        `${BASE_URL}/v1/schedule?stationid=${station.sta_id}&timefrom=${timefrom}&timeto=${timeto}`,
         { headers: defaultHeaders }
       )
         .then(res => res.json());
