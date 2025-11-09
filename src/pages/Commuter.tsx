@@ -97,7 +97,7 @@ const Main: React.FC = () => {
       }
 
       let { data } = await fetch(
-        `${BASE_URL}/v1/schedule?stationid=${station.sta_id}&timefrom=${timefrom}&timeto=${timeto}`,
+        `${BASE_URL}/v1/schedules?stationid=${station.sta_id}&timefrom=${timefrom}&timeto=${timeto}`,
         { headers: defaultHeaders }
       )
         .then(res => res.json());
