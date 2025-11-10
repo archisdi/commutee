@@ -11,6 +11,8 @@ import {
 import { caretDownSharp } from 'ionicons/icons';
 
 import Frame from '../components/Layout';
+import { analytics } from '../firebase/config';
+import { logEvent } from 'firebase/analytics';
 
 interface TrainSchedule {
   train_id: string;
@@ -83,6 +85,14 @@ const Main: React.FC = () => {
     if (!station) return;
     setIsLoading(true);
     try {
+      // Log analytics event
+      if (analytics) {
+        logEvent(analytics, 'view_station_schedule', {
+          station_id: station.sta_id,
+          station_name: station.sta_name
+        });
+      }
+
       const timefrom = moment().format('HH:mm');
 
       // if time to pass midnight, then set time to 23:59 to prevent error
@@ -133,6 +143,14 @@ const Main: React.FC = () => {
   }
 
   const handleRefresh = (e: CustomEvent) => {
+    // Log analytics event
+    if (analytics) {
+      logEvent(analytics, 'refresh_schedule', {
+        station_id: selectedStation?.sta_id,
+        station_name: selectedStation?.sta_name
+      });
+    }
+
     getStationSchedule(selectedStation!);
     e.detail.complete();
   }
@@ -151,6 +169,14 @@ const Main: React.FC = () => {
 
   const handleSearchStation = (ev: CustomEvent) => {
     const searchValue = ev.detail.value;
+
+    // Log analytics event for search
+    if (analytics && searchValue) {
+      logEvent(analytics, 'search_station', {
+        search_term: searchValue
+      });
+    }
+
     let filteredStation: Station[] = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY.STATIONS)!);
 
     if (searchValue) {
@@ -165,6 +191,15 @@ const Main: React.FC = () => {
   const handleSelectStation = (station: Station, isHistory?: boolean) => {
     selectStation(station);
     setIsSearchOpen(false);
+
+    // Log analytics event
+    if (analytics) {
+      logEvent(analytics, 'select_station', {
+        station_id: station.sta_id,
+        station_name: station.sta_name,
+        from_history: isHistory || false
+      });
+    }
 
     /** reset filtered station */
     getStation();

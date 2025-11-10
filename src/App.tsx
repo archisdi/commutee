@@ -1,4 +1,5 @@
 import { IonApp, setupIonicReact } from '@ionic/react';
+import { useEffect } from 'react';
 import Commuter from './pages/Commuter';
 
 /* Core CSS required for Ionic components to work properly */
@@ -20,12 +21,25 @@ import '@ionic/react/css/display.css';
 /* Theme variables */
 import './theme/variables.css';
 
+/* Firebase */
+import { analytics } from './firebase/config';
+import { logEvent } from 'firebase/analytics';
+
 setupIonicReact();
 
-const App: React.FC = () => (
-  <IonApp>
-    <Commuter />
-  </IonApp>
-);
+const App: React.FC = () => {
+  useEffect(() => {
+    // Log app initialization
+    if (analytics) {
+      logEvent(analytics, 'app_open');
+    }
+  }, []);
+
+  return (
+    <IonApp>
+      <Commuter />
+    </IonApp>
+  );
+};
 
 export default App;
